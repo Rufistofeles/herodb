@@ -1,0 +1,236 @@
+﻿@{
+	ViewData["Title"] = "Home Page";
+	ResponseByNameAPI responseApi = ViewBag.resultsByName;
+	IEnumerable<ResultsByName>? resultsByName = responseApi is null ? new List<ResultsByName>():responseApi.Results;	
+}
+
+<div class="container-fluid px-4">
+		<div class="card mb-4">
+			<div class="card-header">
+				@*<i class="fa fa-table"></i>  Consulta de Comprobantes
+				<a asp-area="" asp-controller="CfdiComprobantes" asp-action="Create"
+				class="btn btn-primary m-1"><i class="zmdi zmdi-money-box"></i>
+				Generar Cfdi</a>*@
+			</div>
+			<div class="card-body">
+				<div class="col-sm-12 col-lg-12">
+					<div class="card border-0">
+						<div class="card-header">
+							<div class="bg-primary" id="heading11">
+								<h5 class="mb-0">
+									<button class="btn btn-link text-white collapsed" data-bs-toggle="collapse" data-bs-target="#collapse11" aria-expanded="true" aria-controls="collapse11">
+										<i class="icofont icofont-folder-search"></i> Buscar Superhéroes o villanos...
+									</button>
+								</h5>
+							</div>
+						</div>
+						<div class="card-body">
+							<div class="default-according" id="accordionicon">
+								<div class="collapse" id="collapse11" aria-labelledby="headingOne" data-bs-parent="#accordionicon">
+											<div class="row">
+												@using (Html.BeginForm("Index","Home", FormMethod.Post, new { @enctype = "multipart/form-data", @id = "formHome" }))
+												{  
+													<div class="form-group row">
+														<div class="form-group col">
+															<label>Escribe el nombre del Superhéroe o Villano</label>
+															<div>
+																<input type="text" id="Name" class="form-control" name="Name">                                   
+															</div>
+														</div>														
+													</div>
+													<hr>
+													<div style="text-align:right">
+														<button type="button" onclick="PostForm()" class="btn btn-secondary"><i class="fa fa-search"></i> Buscar</button>
+													</div>                            
+												}
+											</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>			  
+			</div>
+			@if(responseApi != null)
+			{
+				@if(responseApi.Response == "success")
+				{
+					<div class="card-body">
+						<div class="table-responsive">
+							<div id="hero_wrapper" class="dataTables_wrapper container-fluid dt-bootstrap4">
+								<div class="row">
+									<div class="col-sm-12">
+										<table id="hero_table" class="table table-bordered dataTable" role="grid" aria-describedby="example_info">
+											<thead>
+												<tr role="row">
+													<th class="all">Id</th>
+													<th class="all">Nombre</th>
+													<th class="all">Nombre Completo</th>
+													<th class="all">Primera Aparición</th>
+													<th class="all">Editorial</th>
+													<th class="">Tipo de Personaje</th>
+													<th class="all">Detalles</th>
+												</tr>
+											</thead>
+											<tbody>
+												@foreach (var item in resultsByName)
+												{
+													<tr>
+														<td>
+															@Html.DisplayFor(modelItem => item.Id)
+														</td>
+														<td>
+															@Html.DisplayFor(modelItem => item.Name)
+														</td>
+														<td>
+															@Html.DisplayFor(modelItem => item.Biography.Full_name)
+														</td>
+														<td>
+															@Html.DisplayFor(modelItem => item.Biography.First_appearance)
+														</td>
+														<td>
+															@Html.DisplayFor(modelItem => item.Biography.Publisher)
+														</td>
+														<td>
+															@Html.DisplayFor(modelItem => item.Biography.Alignment)
+														</td>
+														<td>
+															<a style="cursor: pointer;" class="linkDetallesHero" data-id="@item.Id">
+																<span class="btn btn-square btn-warning btn-xs" aria-hidden="true" style="font-size:1.5em" title="Detalles @item.Name"><i class="fa fa-exclamation-circle"></i></span>
+															</a>
+														</td>
+													</tr>
+												}
+											</tbody>
+											<tfoot>
+
+											</tfoot>
+										</table>
+									</div>
+								</div>
+
+							</div>
+						</div>
+					</div>	
+				}
+				else
+				{
+					<div class="card-body">
+						<h4 class="pull-left">No se encontraron resultados.</h4>
+					</div>
+				}			
+			}
+		</div>
+	</div>
+
+<div class="modal fade" id="heroModal" tabindex="-1" role="dialog" aria-labelledby="heroModal" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" id="heroDetalle">
+			
+		</div>
+    </div>
+</div>
+
+<partial name="_DetallesPartial.cshtml" />
+
+
+@section scripts
+{
+	<script>
+		var url = "@Url.Action("SearchById", "Home")";
+		$(document).ready(function(){
+			var table = $('#hero_table').DataTable({           
+				lengthChange: false,
+				buttons: 
+				[
+					{ extend: 'copy', text: "Copiar Tabla"},
+					{
+						extend: 'excel',
+						text: "Excel",
+						exportOptions: {
+							columns: ':not(:last-child)'
+						}
+					}, 
+					{ extend: 'print', text: "Imprimir Tabla"}, 
+					{ extend: 'colvis', text: "Columnas"}
+				],
+				colReorder: true,
+				language: {
+					lengthMenu: "Display _MENU_ records per page",
+					zeroRecords: "Sin información",
+					info: "_MAX_ registros en total. Mostrando página _PAGE_ de _PAGES_",
+					infoEmpty: "Sin información disponible",
+					infoFiltered: "filtro aplicado",
+					search: "Búsqueda Rápida:",
+					paginate: {
+						first:"Inicio",
+						last:"Fin",
+						next:"Siguiente",
+						previous:"Anterior"
+					},
+				},
+				responsive: true,
+				fixedColumns: true,
+				"order": [[ 0, "desc" ]]
+			});
+			table.buttons().container().appendTo('#hero_wrapper .col-md-6:eq(0)');
+
+			new $.fn.dataTable.ColReorder(table);
+		});
+
+		$('#hero_table').on('click', '.linkDetallesHero', function (){
+			var id = $(this).attr("data-id");			
+			var idElemento = "#heroDetalle";
+			$.ajax({
+				url: url,
+                type: "POST",                    
+                traditional: true,
+                data: { Id: id },
+                success: function (result) {
+					console.log(result);
+					l = result;
+					if (result != null) {
+                            
+                            MostrarDetalle(result, idElemento);
+                        }
+                },
+				error: function (e) {
+					console.log(e);
+                },
+            });
+		});
+
+		function MostrarDetalle(hero, idElemento)
+		 {
+			 if(hero == null)
+			 {
+				 $("#heroDetalle").html("");
+			 }else
+			 {
+				 //console.log(comprobante);
+				 var template = _.template($("#heroDetalleTemplate").html());
+				 var html = template(hero);
+				 $(idElemento).html(html)			
+
+				 var myModal = new bootstrap.Modal(document.getElementById('heroModal'), {
+						keyboard: false
+					});
+				myModal.show();
+			 }
+
+		 }
+
+
+		function PostForm()
+		{
+			let busca = document.getElementById("Name").value;
+			if(busca == '')
+			{
+				alert("Name required");
+			}
+			else
+			{
+				document.getElementById("formHome").submit();
+			}			
+		}
+	</script>
+}
